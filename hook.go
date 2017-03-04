@@ -75,11 +75,6 @@ func (h *FirehoseHook) SetLevels(levels []logrus.Level) {
 	h.levels = levels
 }
 
-// SetPartitionKey sets default partitionKey for firehose.
-func (h *FirehoseHook) SetPartitionKey(key string) {
-	h.defaultPartitionKey = key
-}
-
 // Async sets async flag and send log asynchroniously.
 // If use this option, Fire() does not return error.
 func (h *FirehoseHook) Async() {
@@ -127,10 +122,6 @@ func (h *FirehoseHook) getStreamName(entry *logrus.Entry) string {
 }
 
 func (h *FirehoseHook) getData(entry *logrus.Entry) []byte {
-	if _, ok := entry.Data["message"]; !ok {
-		entry.Data["message"] = entry.Message
-	}
-
 	data := make(logrus.Fields)
 	for k, v := range entry.Data {
 		if _, ok := h.ignoreFields[k]; ok {
@@ -148,6 +139,7 @@ func (h *FirehoseHook) getData(entry *logrus.Entry) []byte {
 	if err != nil {
 		return nil
 	}
+	//entry.Data["firehose_message"] = entry.Message
 	return bytes
 }
 

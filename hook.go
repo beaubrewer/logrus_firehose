@@ -30,6 +30,7 @@ type FirehoseHook struct {
 	levels              []logrus.Level
 	ignoreFields        map[string]struct{}
 	filters             map[string]func(interface{}) interface{}
+	addNewline          bool
 }
 
 // New returns initialized logrus hook for Firehose with persistent Firehose logger.
@@ -91,6 +92,11 @@ func (h *FirehoseHook) AddFilter(name string, fn func(interface{}) interface{}) 
 	h.filters[name] = fn
 }
 
+// AddNewline sets if a newline is added to each message.
+func (h *FirehoseHook) AddNewLine(b bool) {
+	h.addNewline = b
+}
+
 // Fire is invoked by logrus and sends log to Firehose.
 func (h *FirehoseHook) Fire(entry *logrus.Entry) error {
 	if !h.async {
@@ -139,7 +145,10 @@ func (h *FirehoseHook) getData(entry *logrus.Entry) []byte {
 	if err != nil {
 		return nil
 	}
-	//entry.Data["firehose_message"] = entry.Message
+	if h.addNewline {
+		n := []byte("\n")
+		bytes = append(bytes, n...)
+	}
 	return bytes
 }
 

@@ -129,6 +129,7 @@ func (h *FirehoseHook) getStreamName(entry *logrus.Entry) string {
 
 func (h *FirehoseHook) getData(entry *logrus.Entry) []byte {
 	data := make(logrus.Fields)
+	entry.Data["message"] = entry.Message
 	for k, v := range entry.Data {
 		if _, ok := h.ignoreFields[k]; ok {
 			continue

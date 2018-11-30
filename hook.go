@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/firehose"
+	"github.com/sirupsen/logrus"
 )
 
 var defaultLevels = []logrus.Level{
@@ -59,10 +59,11 @@ func NewWithAWSConfig(name string, conf *aws.Config) (*FirehoseHook, error) {
 
 	svc := firehose.New(sess)
 	return &FirehoseHook{
-		client:       svc,
-		levels:       defaultLevels,
-		ignoreFields: make(map[string]struct{}),
-		filters:      make(map[string]func(interface{}) interface{}),
+		client:            svc,
+		defaultStreamName: name,
+		levels:            defaultLevels,
+		ignoreFields:      make(map[string]struct{}),
+		filters:           make(map[string]func(interface{}) interface{}),
 	}, nil
 }
 

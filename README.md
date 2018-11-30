@@ -10,7 +10,7 @@ logrus_firehose
 
 ```go
 import (
-    "github.com/Sirupsen/logrus"
+    "github.com/sirupsen/logrus"
     "github.com/beaubrewer/logrus_firehose"
 )
 
@@ -62,15 +62,16 @@ logrus_firehose
 
 ```go
 import (
-    "github.com/Sirupsen/logrus"
+    "github.com/sirupsen/logrus"
     "github.com/beaubrewer/logrus_firehose"
 )
 
 func main() {
-    hook, err := logrus_firehose.New("my_stream", Config{
+    hook, err := logrus_firehose.New("my_stream", logrus_firehose.Config{
         AccessKey: "ABC", // AWS accessKeyId
         SecretKey: "XYZ", // AWS secretAccessKey
         Region:    "us-west-2",
+        Endpoint:  "firehose.us-west-2.amazonaws.com",
     })
 
     // set custom fire level

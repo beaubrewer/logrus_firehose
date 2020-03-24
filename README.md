@@ -26,13 +26,9 @@ func main() {
         logrus.PanicLevel,
         logrus.ErrorLevel,
     })
-
-    // ignore field
-    hook.AddIgnore("context")
-
-    // add custome filter
-    hook.AddFilter("error", logrus_firehose.FilterError)
-
+    
+    hook.
+    
 
     // send log with logrus
     logger := logrus.New()

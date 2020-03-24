@@ -22,7 +22,7 @@ func (c Config) AWSConfig() *aws.Config {
 	cred := c.awsCredentials()
 	awsConf := &aws.Config{
 		Credentials: cred,
-		Region:      stringPtr(c.getRegion()),
+		Region:      aws.String(c.getRegion()),
 	}
 
 	ep := c.getEndpoint()

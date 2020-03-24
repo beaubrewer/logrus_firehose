@@ -103,7 +103,7 @@ func TestGetStreamName(t *testing.T) {
 		target := fmt.Sprintf("%+v", tt)
 
 		hook := FirehoseHook{
-			defaultStreamName: tt.defautName,
+			streamName: tt.defautName,
 		}
 		entry := &logrus.Entry{
 			Data: make(map[string]interface{}),

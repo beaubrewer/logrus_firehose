@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var defaultLevels = []logrus.Level{
+var DefaultLevels = []logrus.Level{
 	logrus.PanicLevel,
 	logrus.FatalLevel,
 	logrus.ErrorLevel,
@@ -20,13 +20,42 @@ var defaultLevels = []logrus.Level{
 // streaming data to destinations such as Amazon Simple Storage Service (Amazon
 // S3), Amazon Elasticsearch Service (Amazon ES), and Amazon Redshift.
 type FirehoseHook struct {
-	client              *firehose.Firehose
-	defaultStreamName   string
-	defaultPartitionKey string
-	async               bool
-	levels              []logrus.Level
-	addNewline          bool
-	formatter           logrus.Formatter
+
+	/*
+	aws firehose sdk
+	*/
+	client     *firehose.Firehose
+
+	/*
+		firehose stream name to write to
+	*/
+	streamName string
+
+	/*
+		levels being hooked
+	*/
+	levels []logrus.Level
+
+	/*
+		should append new line in each msg
+	*/
+	addNewline bool
+
+	/*
+		an instance of logrus.Formatter used to format the msg
+	*/
+	formatter logrus.Formatter
+
+	/*
+		make firehose request in async mode
+	*/
+	async bool
+
+	/*
+		blockingMode specify if the queue is not empty
+		should any write being blocked or discard
+	*/
+	blockingMode bool
 }
 
 // New returns initialized logrus hook for Firehose with persistent Firehose logger.
@@ -38,10 +67,10 @@ func New(name string, conf Config) (*FirehoseHook, error) {
 
 	svc := firehose.New(sess)
 	return &FirehoseHook{
-		client:            svc,
-		defaultStreamName: name,
-		levels:            defaultLevels,
-		formatter:         &logrus.JSONFormatter{},
+		client:     svc,
+		streamName: name,
+		levels:     DefaultLevels,
+		formatter:  &logrus.JSONFormatter{},
 	}, nil
 }
 
@@ -54,10 +83,10 @@ func NewWithAWSConfig(name string, conf *aws.Config) (*FirehoseHook, error) {
 
 	svc := firehose.New(sess)
 	return &FirehoseHook{
-		client:            svc,
-		defaultStreamName: name,
-		levels:            defaultLevels,
-		formatter:         &logrus.JSONFormatter{},
+		client:     svc,
+		streamName: name,
+		levels:     DefaultLevels,
+		formatter:  &logrus.JSONFormatter{},
 	}, nil
 }
 
@@ -100,20 +129,13 @@ func (h *FirehoseHook) Fire(entry *logrus.Entry) error {
 // Fire is invoked by logrus and sends log to Firehose.
 func (h *FirehoseHook) fire(entry *logrus.Entry) error {
 	in := &firehose.PutRecordInput{
-		DeliveryStreamName: aws.String(h.getStreamName(entry)),
+		DeliveryStreamName: aws.String(h.streamName),
 		Record: &firehose.Record{
 			Data: h.getData(entry),
 		},
 	}
 	_, err := h.client.PutRecord(in)
 	return err
-}
-
-func (h *FirehoseHook) getStreamName(entry *logrus.Entry) string {
-	if name, ok := entry.Data["stream_name"].(string); ok {
-		return name
-	}
-	return h.defaultStreamName
 }
 
 var newLine = []byte("\n")

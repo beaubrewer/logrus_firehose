@@ -21,7 +21,7 @@ func TestNewWithAWSConfig(t *testing.T) {
 	assert := assert.New(t)
 	t.Skip("TODO: add some case")
 
-	hook, err := NewWithAWSConfig("test_stream", nil)
+	hook, err := NewFirehoseHook("test_stream", nil)
 	assert.Error(err)
 	assert.Nil(hook)
 }

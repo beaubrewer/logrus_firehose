@@ -2,7 +2,6 @@ package logrus_firehose
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/sirupsen/logrus"
 )
@@ -15,6 +14,8 @@ var DefaultLevels = []logrus.Level{
 	logrus.InfoLevel,
 }
 
+type Option func(*FirehoseHook)
+
 // FirehoseHook is logrus hook for AWS Firehose.
 // Amazon Kinesis Firehose is a fully-managed service that delivers real-time
 // streaming data to destinations such as Amazon Simple Storage Service (Amazon
@@ -22,7 +23,7 @@ var DefaultLevels = []logrus.Level{
 type FirehoseHook struct {
 
 	/*
-		aws firehose sdk
+		firehose client
 	*/
 	client *firehose.Firehose
 
@@ -56,38 +57,25 @@ type FirehoseHook struct {
 		should any write being blocked or discard
 	*/
 	blockingMode bool
-}
 
-// New returns initialized logrus hook for Firehose with persistent Firehose logger.
-func New(name string, conf Config) (*FirehoseHook, error) {
-	sess, err := session.NewSession(conf.AWSConfig())
-	if err != nil {
-		return nil, err
-	}
-
-	svc := firehose.New(sess)
-	return &FirehoseHook{
-		client:     svc,
-		streamName: name,
-		levels:     DefaultLevels,
-		formatter:  &logrus.JSONFormatter{},
-	}, nil
+	/*
+		async queue used to
+	*/
+	sendQueue chan interface{}
 }
 
 // NewWithConfig returns initialized logrus hook for Firehose with persistent Firehose logger.
-func NewWithAWSConfig(name string, conf *aws.Config) (*FirehoseHook, error) {
-	sess, err := session.NewSession(conf)
-	if err != nil {
-		return nil, err
-	}
-
-	svc := firehose.New(sess)
-	return &FirehoseHook{
-		client:     svc,
+func NewFirehoseHook(name string, client *firehose.Firehose, opts ...Option) (*FirehoseHook, error) {
+	hk := &FirehoseHook{
+		client:     client,
 		streamName: name,
 		levels:     DefaultLevels,
 		formatter:  &logrus.JSONFormatter{},
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(hk)
+	}
+	return hk, nil
 }
 
 // Levels returns logging level to fire this hook.
@@ -95,24 +83,33 @@ func (h *FirehoseHook) Levels() []logrus.Level {
 	return h.levels
 }
 
-// SetLevels sets logging level to fire this hook.
-func (h *FirehoseHook) SetLevels(levels []logrus.Level) {
-	h.levels = levels
+// WithLevels sets logging level to fire this hook.
+func WithLevels(levels []logrus.Level) Option {
+	return func(hook *FirehoseHook) {
+		hook.levels = levels
+	}
 }
 
-// Async sets async flag and send log asynchroniously.
+// WithAsync sets async flag and send log asynchroniously.
 // If use this option, Fire() does not return error.
-func (h *FirehoseHook) Async() {
-	h.async = true
+func WithAsync() Option {
+	return func(hook *FirehoseHook) {
+		hook.async = true
+	}
 }
 
-// AddNewline sets if a newline is added to each message.
-func (h *FirehoseHook) AddNewLine(b bool) {
-	h.addNewline = b
+// WithAddNewline sets if a newline is added to each message.
+func (h *FirehoseHook) WithAddNewLine() Option {
+	return func(hook *FirehoseHook) {
+		h.addNewline = true
+	}
 }
 
-func (h *FirehoseHook) WithFormatter(f logrus.Formatter) {
-	h.formatter = f
+// WithFormatter sets a log entry formatter
+func (h *FirehoseHook) WithFormatter(f logrus.Formatter) Option {
+	return func(hook *FirehoseHook) {
+		hook.formatter = f
+	}
 }
 
 // Fire is invoked by logrus and sends log to Firehose.

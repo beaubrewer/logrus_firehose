@@ -170,21 +170,19 @@ func (h *FirehoseHook) Levels() []logrus.Level {
 
 // Fire is invoked by logrus and sends log to Firehose.
 func (h *FirehoseHook) Fire(entry *logrus.Entry) error {
-SendLoop:
 	for {
 		select {
 		case h.sendQueue <- entry:
-			break SendLoop
+			return nil
 		default:
 			if !h.blockingMode {
 				if h.logger != nil {
 					h.logger.Warn("queue is full and non-blocking mode specified, dropping record")
 				}
-				break SendLoop
+				return nil
 			}
 		}
 	}
-	return nil
 }
 
 func (h *FirehoseHook) SendLoop(tick <-chan time.Time) {
@@ -218,6 +216,10 @@ func (h *FirehoseHook) SendLoop(tick <-chan time.Time) {
 					},
 				)
 				if err == nil && *resp.FailedPutCount == 0 {
+					if h.logger != nil {
+						h.logger.WithField("lines-emitted", len(resp.RequestResponses)).
+							Debug("log successfully emitted")
+					}
 					continue
 				}
 				if h.logger != nil {

@@ -78,11 +78,6 @@ func NewFirehoseHook(name string, client *firehose.Firehose, opts ...Option) (*F
 	return hk, nil
 }
 
-// Levels returns logging level to fire this hook.
-func (h *FirehoseHook) Levels() []logrus.Level {
-	return h.levels
-}
-
 // WithLevels sets logging level to fire this hook.
 func WithLevels(levels []logrus.Level) Option {
 	return func(hook *FirehoseHook) {
@@ -113,17 +108,6 @@ func (h *FirehoseHook) WithFormatter(f logrus.Formatter) Option {
 }
 
 // Fire is invoked by logrus and sends log to Firehose.
-func (h *FirehoseHook) Fire(entry *logrus.Entry) error {
-	if !h.async {
-		return h.fire(entry)
-	}
-
-	// send log asynchroniously and return no error.
-	go h.fire(entry)
-	return nil
-}
-
-// Fire is invoked by logrus and sends log to Firehose.
 func (h *FirehoseHook) fire(entry *logrus.Entry) error {
 	in := &firehose.PutRecordInput{
 		DeliveryStreamName: aws.String(h.streamName),
@@ -147,3 +131,22 @@ func (h *FirehoseHook) getData(entry *logrus.Entry) []byte {
 	}
 	return bytes
 }
+
+
+// Levels returns logging level to fire this hook.
+func (h *FirehoseHook) Levels() []logrus.Level {
+	return h.levels
+}
+
+// Fire is invoked by logrus and sends log to Firehose.
+func (h *FirehoseHook) Fire(entry *logrus.Entry) error {
+	if !h.async {
+		return h.fire(entry)
+	}
+
+	// send log asynchroniously and return no error.
+	go h.fire(entry)
+	return nil
+}
+
+var _ logrus.Hook = (*FirehoseHook) (nil)

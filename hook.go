@@ -22,9 +22,9 @@ var DefaultLevels = []logrus.Level{
 type FirehoseHook struct {
 
 	/*
-	aws firehose sdk
+		aws firehose sdk
 	*/
-	client     *firehose.Firehose
+	client *firehose.Firehose
 
 	/*
 		firehose stream name to write to

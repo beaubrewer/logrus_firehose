@@ -102,4 +102,4 @@ Some logrus fields have a special meaning in this hook.
 |||
 |:--|:--|
 |`message`|if `message` is not set, entry.Message is added to log data in "message" field. |
-|`stream_name`|`stream_name` isthe  stream name for Firehose. If not set, `defaultStreamName` is used as stream name.|
+|`stream_name`|`stream_name` is the  stream name for Firehose. If not set, `defaultStreamName` is used as stream name.|
